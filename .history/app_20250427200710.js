@@ -1,34 +1,29 @@
 const express = require("express");
-const mongoose = require("mongoose");
+const mongoose = require("mongose");
 const bodyParser = require("body-parser");
-const cors = require('cors');
+const cors = require('cors'); // Import the cors package
 
-// Import your routes
 const usersRoute = require("./routes/users");
 const reviewsRoute = require("./routes/reviews");
 const userListRoute = require("./routes/user-list");
+// const reviewsInteractionRoute = require("./routes/review-interactions");
 
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-// 🔥 ضع رابط MongoDB هنا مباشرة
-const MONGO_URI = "mongodb+srv://Malik:Malik20@cluster0.49odtnt.mongodb.net/movieApp"; 
-
 mongoose
-  .connect(MONGO_URI, {
+  .connect("mongodb+srv://Malik:Malik20@cluster0.49odtnt.mongodb.net/", {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
   .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.log("MongoDB connection error:", err));
+  .catch((err) => console.log(err));
 
-// Use your routes
 app.use("/api/users", usersRoute);
 app.use("/api/reviews", reviewsRoute);
 app.use("/api/userList", userListRoute);
 
-// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
