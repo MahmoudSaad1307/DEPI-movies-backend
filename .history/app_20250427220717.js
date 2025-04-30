@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require('cors');
 
+// Import your routes
 const usersRoute = require("./routes/users");
 const reviewsRoute = require("./routes/reviews");
 const userListRoute = require("./routes/user-list");
@@ -26,6 +27,7 @@ app.use("/api/users", usersRoute);
 app.use("/api/reviews", reviewsRoute);
 app.use("/api/userList", userListRoute);
 
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on Port ${PORT}`);
