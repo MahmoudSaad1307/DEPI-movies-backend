@@ -8,7 +8,7 @@ router.post("/:type", async (req, res) => {
   const isMovie=type==='movie';
   // const {text}=content;
   try {
-    const review = new Review({userId,movieId,content,isMovie});
+    const review = new Review({userId,movieId,content});
     const saved = await review.save();
     res.json(saved);
   } catch (err) {

@@ -1,18 +1,17 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
-const cors = require("cors");
+const cors = require('cors');
 
 const usersRoute = require("./routes/users");
 const reviewsRoute = require("./routes/reviews");
-const userListRoute = require("./routes/user-list");
+const userListRoute = require("./routes/user-list")
 
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MONGO_URI =
-  "mongodb+srv://Malik:Malik20@cluster0.49odtnt.mongodb.net/movieApp";
+const MONGO_URI = "mongodb+srv://Malik:Malik20@cluster0.49odtnt.mongodb.net/movieApp"; 
 
 mongoose
   .connect(MONGO_URI, {

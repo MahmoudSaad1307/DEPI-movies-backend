@@ -4,11 +4,11 @@ const Review = require("../models/Review");
 
 router.post("/:type", async (req, res) => {
   const { userId, movieId,content } = req.body;
-  const {type}=req.params;
-  const isMovie=type==='movie';
+  const {type}
+  const isMovie===t
   // const {text}=content;
   try {
-    const review = new Review({userId,movieId,content,isMovie});
+    const review = new Review({userId,movieId,content});
     const saved = await review.save();
     res.json(saved);
   } catch (err) {
