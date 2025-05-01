@@ -117,13 +117,12 @@ router.patch("/:id/favorites", async (req, res) => {
       await user.save();
       return res.json({ success: true, favorites: user.movies.favorites });
     } else {
-      const updatedMovies = user.movies.favorites.filter((e) => e !== movieId);
+const updatedMovies=user.movies.favorites.filter(e=>e!==movieId);
 
-      user.movies.favorites = updatedMovies;
+      user.movies.favorites=updatedMovies;
 
       await user.save();
-      return res.json({ success: true, favorites: user.movies.favorites });
-
+      return res.json({ success: true, watchlist: user.movies.watchlist });    }
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -142,52 +141,15 @@ router.patch("/:id/watchList", async (req, res) => {
 
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    if (user.movies.watchlist.some(movie => movie.movieId === movieId)) {
-      user.movies.watchlist=user.movies.watchlist.filter(movie=>movie.movieId!==movieId)
+    if (!user.movies.watchlist.includes(movieId)) {
+      user.movies.watchlist.push(movieId);
       await user.save();
       return res.json({ success: true, watchlist: user.movies.watchlist });
     } else {
-      // user.movies.watchlist=[{}]
+      user.movies.watchlist.push(movieId);
 
-      user.movies.watchlist.push({movieId});
       await user.save();
-      return res.json({ success: true, watchlist: user.movies.watchlist });
-
-    
-    }
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.patch("/:id/watched", async (req, res) => {
-  try {
-
-    const userId = req.params.id;
-    const { movieId ,rating,ratingProvided=false} = req.body;
-
-    if (!movieId) {
-      return res.status(400).json({ error: "movieId is required" });
-    }
-
-    const user = await User.findById(userId);
-
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-const currentMovie=user.movies.watched.find(movie=>movie.movieId==movieId)
-// const currentRate=currentMovie.rating;
-    if (user.movies.watched.some(movie => movie.movieId === movieId)&&!ratingProvided) {
-      user.movies.watched=user.movies.watched.filter(movie=>movie.movieId!==movieId)
-      await user.save();
-      return res.json({ success: true, watched: user.movies.watched });
-    } else{
-      user.movies.watched=user.movies.watched.filter(movie=>movie.movieId!==movieId)
-      user.movies.watched.push({movieId,rating});
-      await user.save();
-      return res.json({ success: true, watched: user.movies.watched });
-
-    }
-    
+      return res.json({ success: true, watchlist: user.movies.watchlist });    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

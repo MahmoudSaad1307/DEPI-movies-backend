@@ -32,7 +32,7 @@ const UserSchema = new mongoose.Schema({
     favorites: { type: [Number], default: [] },
     watchlist: [
       {
-        movieId: { type: Number, required: true },
+        tmdbId: { type: Number, required: true },
         addedAt: { type: Date, default: Date.now },
       },
     ],

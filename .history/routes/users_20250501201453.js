@@ -173,10 +173,9 @@ router.patch("/:id/watched", async (req, res) => {
     const user = await User.findById(userId);
 
     if (!user) return res.status(404).json({ error: "User not found" });
-
 const currentMovie=user.movies.watched.find(movie=>movie.movieId==movieId)
-// const currentRate=currentMovie.rating;
-    if (user.movies.watched.some(movie => movie.movieId === movieId)&&!ratingProvided) {
+const currentRate=currentMovie.rating;
+    if (user.movies.watched.some(movie => movie.movieId === movieId)&&(currentRate==undefined&&_) {
       user.movies.watched=user.movies.watched.filter(movie=>movie.movieId!==movieId)
       await user.save();
       return res.json({ success: true, watched: user.movies.watched });

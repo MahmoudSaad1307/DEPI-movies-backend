@@ -164,7 +164,7 @@ router.patch("/:id/watched", async (req, res) => {
   try {
 
     const userId = req.params.id;
-    const { movieId ,rating,ratingProvided=false} = req.body;
+    const { movieId ,rating,noRating=true} = req.body;
 
     if (!movieId) {
       return res.status(400).json({ error: "movieId is required" });
@@ -174,20 +174,19 @@ router.patch("/:id/watched", async (req, res) => {
 
     if (!user) return res.status(404).json({ error: "User not found" });
 
-const currentMovie=user.movies.watched.find(movie=>movie.movieId==movieId)
-// const currentRate=currentMovie.rating;
-    if (user.movies.watched.some(movie => movie.movieId === movieId)&&!ratingProvided) {
+    if (user.movies.watched.some(movie => movie.movieId === movieId)&&noRating) {
       user.movies.watched=user.movies.watched.filter(movie=>movie.movieId!==movieId)
       await user.save();
       return res.json({ success: true, watched: user.movies.watched });
-    } else{
-      user.movies.watched=user.movies.watched.filter(movie=>movie.movieId!==movieId)
+    } else if()){
+      // user.movies.watchlist=[{}]
+
       user.movies.watched.push({movieId,rating});
       await user.save();
       return res.json({ success: true, watched: user.movies.watched });
 
-    }
     
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
