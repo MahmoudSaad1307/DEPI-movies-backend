@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const Review = require("../models/Review");
-const User = require("../models/User");
+const jwt = require("jsonwebtoken");
+const verifyToken = require("../auth");
 
-router.post("/:type", async (req, res) => {
-  const { userId, movieId,content } = req.body;
+router.post("/:type", verifyToken,async (req, res) => {
+  const { movieId,content } = req.body;
   const {type}=req.params;
   const isMovie=type=='movie';
   // const {text}=content;
@@ -22,16 +23,5 @@ router.get("/:type/:movieId", async (req, res) => {
   const reviews = await Review.find({ movieId });
   res.json(reviews);
 });
-router.get("/myReviews",async(req,res)=>{
-
-  const {userId}=req.body;
-
-      const user = await User.findById(userId);
-      if (!user) return res.status(404).json({ error: "User not found" });
-      const reviews = await Review.find({ userId });
-      res.json(reviews);
-
-  
-})
 
 module.exports = router;
