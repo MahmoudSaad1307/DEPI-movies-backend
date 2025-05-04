@@ -17,14 +17,14 @@ router.post("/:type", async (req, res) => {
   }
 });
 
-// router.get("/:type/:movieId", async (req, res) => {
-//   const { type,movieId } = req.params;
-//   const reviews = await Review.find({ movieId });
-//   res.json(reviews);
-// });
+router.get("/:type/:movieId", async (req, res) => {
+  const { type,movieId } = req.params;
+  const reviews = await Review.find({ movieId });
+  res.json(reviews);
+});
 router.get("/myReviews/:userId",async(req,res)=>{
 
-  const {userId}=req.params;
+  const {userId}=req.body;
 
       const user = await User.findById(userId);
       if (!user) return res.status(404).json({ error: "User not found" });
