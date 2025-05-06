@@ -200,9 +200,9 @@ router.patch("/:id/watched", async (req, res) => {
       user.movies.watched = user.movies.watched.filter(
         (movie) => movie.movieId !== movieId
       );
-      user.movies.watched.push({ movieId, rating ,ratingProvided});
+      user.movies.watched.push({ movieId, rating });
       await user.save();
-      return res.json({ success: true, watched: user.movies.watched ,});
+      return res.json({ success: true, watched: user.movies.watched ,ratingProvided});
     }
   } catch (err) {
     res.status(500).json({ error: err.message });

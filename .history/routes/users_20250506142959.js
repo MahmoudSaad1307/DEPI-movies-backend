@@ -90,12 +90,10 @@ router.get("/", async (req, res) => {
     console.error("Error fetching users:", error);
     res.status(500).json({ error: "Internal Server Errr" });
   }
-});
-router.get("/findUser/:userId", async (req, res) => {
-  const {userId}=req.params;
+});router.get("/", async (req, res) => {
   try {
-    const user = await User.findById(userId).select("name photoURL movies");
-    res.json(user);
+    const users = await User.find();
+    res.json(users);
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).json({ error: "Internal Server Errr" });
@@ -134,6 +132,7 @@ router.patch("/:id/favorites", async (req, res) => {
 
       await user.save();
       return res.json({ success: true, favorites: user.movies.favorites });
+
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -141,7 +140,7 @@ router.patch("/:id/favorites", async (req, res) => {
 });
 router.patch("/:id/watchList", async (req, res) => {
   try {
-    const userId = req.params.id;
+    const userId = req.params.id; 
     const { movieId } = req.body;
 
     if (!movieId) {
@@ -152,18 +151,18 @@ router.patch("/:id/watchList", async (req, res) => {
 
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    if (user.movies.watchlist.some((movie) => movie.movieId === movieId)) {
-      user.movies.watchlist = user.movies.watchlist.filter(
-        (movie) => movie.movieId !== movieId
-      );
+    if (user.movies.watchlist.some(movie => movie.movieId === movieId)) {
+      user.movies.watchlist=user.movies.watchlist.filter(movie=>movie.movieId!==movieId)
       await user.save();
       return res.json({ success: true, watchlist: user.movies.watchlist });
     } else {
       // user.movies.watchlist=[{}]
 
-      user.movies.watchlist.push({ movieId });
+      user.movies.watchlist.push({movieId});
       await user.save();
       return res.json({ success: true, watchlist: user.movies.watchlist });
+
+    
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -172,8 +171,9 @@ router.patch("/:id/watchList", async (req, res) => {
 
 router.patch("/:id/watched", async (req, res) => {
   try {
+
     const userId = req.params.id;
-    const { movieId, rating, ratingProvided = false } = req.body;
+    const { movieId ,rating,ratingProvided=false} = req.body;
 
     if (!movieId) {
       return res.status(400).json({ error: "movieId is required" });
@@ -183,27 +183,20 @@ router.patch("/:id/watched", async (req, res) => {
 
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    const currentMovie = user.movies.watched.find(
-      (movie) => movie.movieId == movieId
-    );
-    // const currentRate=currentMovie.rating;
-    if (
-      user.movies.watched.some((movie) => movie.movieId === movieId) &&
-      !ratingProvided
-    ) {
-      user.movies.watched = user.movies.watched.filter(
-        (movie) => movie.movieId !== movieId
-      );
+const currentMovie=user.movies.watched.find(movie=>movie.movieId==movieId)
+// const currentRate=currentMovie.rating;
+    if (user.movies.watched.some(movie => movie.movieId === movieId)&&!ratingProvided) {
+      user.movies.watched=user.movies.watched.filter(movie=>movie.movieId!==movieId)
       await user.save();
       return res.json({ success: true, watched: user.movies.watched });
-    } else {
-      user.movies.watched = user.movies.watched.filter(
-        (movie) => movie.movieId !== movieId
-      );
-      user.movies.watched.push({ movieId, rating ,ratingProvided});
+    } else{
+      user.movies.watched=user.movies.watched.filter(movie=>movie.movieId!==movieId)
+      user.movies.watched.push({movieId,rating});
       await user.save();
-      return res.json({ success: true, watched: user.movies.watched ,});
+      return res.json({ success: true, watched: user.movies.watched });
+
     }
+    
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -40,7 +40,7 @@ const UserSchema = new mongoose.Schema({
       {
         movieId: { type: Number, required: true },
         rating: Number,
-        ratingProvided:Boolean,
+        ratingProvided,
         watchedAt: { type: Date, default: Date.now },
       },
     ],

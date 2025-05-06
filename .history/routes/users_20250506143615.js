@@ -94,7 +94,7 @@ router.get("/", async (req, res) => {
 router.get("/findUser/:userId", async (req, res) => {
   const {userId}=req.params;
   try {
-    const user = await User.findById(userId).select("name photoURL movies");
+    const user = await User.findById(userId).select("name photoURL");
     res.json(user);
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -200,9 +200,9 @@ router.patch("/:id/watched", async (req, res) => {
       user.movies.watched = user.movies.watched.filter(
         (movie) => movie.movieId !== movieId
       );
-      user.movies.watched.push({ movieId, rating ,ratingProvided});
+      user.movies.watched.push({ movieId, rating });
       await user.save();
-      return res.json({ success: true, watched: user.movies.watched ,});
+      return res.json({ success: true, watched: user.movies.watched });
     }
   } catch (err) {
     res.status(500).json({ error: err.message });

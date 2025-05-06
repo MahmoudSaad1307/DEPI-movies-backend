@@ -7,7 +7,7 @@ const UserList = require('../models/UserList');
 
 router.post('/',async(req,res)=>{
 
-  const { userId, title, movies,description } = req.body;
+  const { userId, title, movies } = req.body;
   try {
 
     if (!userId || !title ) {
@@ -18,7 +18,7 @@ router.post('/',async(req,res)=>{
       userId,
       title,
       movies,
-      description,
+      description
     });
 
     const savedList = await newList.save();
