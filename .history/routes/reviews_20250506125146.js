@@ -17,10 +17,10 @@ router.post("/:type", async (req, res) => {
   }
 });
 
-router.get("/:type/:movieId", async (req, res) => {
-  const { type,movieId } = req.params;
-  const isMovie=type=='movie';
-  const reviews = await Review.find({ movieId:movieId,isMovie });
+router.get("/:movieId", async (req, res) => {
+  const {movieId } = req.params;
+  // const isMovie=type=='movie';
+  const reviews = await Review.find({ movieId:movieId });
   res.json(reviews);
 });
 router.get("/myReviews/:userId",async(req,res)=>{
