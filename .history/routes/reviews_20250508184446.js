@@ -4,6 +4,7 @@ const Review = require("../models/Review");
 const User = require("../models/User");
 const mongoose = require("mongoose"); // Add this line
 router.get("/user/:userId", async (req, res) => {
+  res.json("sdfsk")
   try {
     const { userId } = req.params;
 

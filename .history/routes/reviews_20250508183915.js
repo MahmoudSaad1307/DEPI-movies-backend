@@ -2,10 +2,33 @@ const express = require("express");
 const router = express.Router();
 const Review = require("../models/Review");
 const User = require("../models/User");
-const mongoose = require("mongoose"); // Add this line
-router.get("/user/:userId", async (req, res) => {
+
+router.post("/:type", async (req, res) => {
+  const { userId, movieId,content } = req.body;
+  const {type}=req.params;
+  const isMovie=type=='movie';
+  // const {text}=content;
   try {
-    const { userId } = req.params;
+    const review = new Review({userId,movieId,content,isMovie});
+    const saved = await review.save();
+    res.json(saved);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.get("/:type/:movieId", async (req, res) => {
+  const { type,movieId } = req.params;
+  const isMovie=type=='movie';
+  const reviews = await Review.find({ movieId:movieId,isMovie });
+  res.json(reviews);
+});
+router.post("/myReviews", async (req, res) => {
+  console.log("sd");
+  res.json('de')
+  
+  try {
+    const { userId } = req.body;
 
     // Validate userId
     if (!userId) {
@@ -29,27 +52,6 @@ router.get("/user/:userId", async (req, res) => {
     }
     res.status(500).json({ error: "Server error", details: error.message });
   }
-});
-
-router.post("/:type", async (req, res) => {
-  const { userId, movieId,content } = req.body;
-  const {type}=req.params;
-  const isMovie=type=='movie';
-  // const {text}=content;
-  try {
-    const review = new Review({userId,movieId,content,isMovie});
-    const saved = await review.save();
-    res.json(saved);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-router.get("/:type/:movieId", async (req, res) => {
-  const { type,movieId } = req.params;
-  const isMovie=type=='movie';
-  const reviews = await Review.find({ movieId:movieId,isMovie });
-  res.json(reviews);
 });
 
 module.exports = router;
