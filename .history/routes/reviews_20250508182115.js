@@ -23,16 +23,13 @@ router.get("/:type/:movieId", async (req, res) => {
   const reviews = await Review.find({ movieId:movieId,isMovie });
   res.json(reviews);
 });
-router.post("/myReviews", async (req, res) => {
+router.get("/myReviews/:userId", async (req, res) => {
   try {
-    const { userId } = req.body;
+    const { userId } = req.params;
 
-    // Validate userId
-    if (!userId) {
-      return res.status(400).json({ error: "userId is required" });
-    }
+    // Validate userId format
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ error: "Invalid userId format" });
+      return res.status(400).json({ error: "Invalid user ID format" });
     }
 
     // Check if user exists
@@ -43,9 +40,10 @@ router.post("/myReviews", async (req, res) => {
     const reviews = await Review.find({ userId });
     res.json(reviews);
   } catch (error) {
-    console.error('Error in POST /myReviews:', error);
+    console.error('Error in /myReviews/:userId:', error);
+    // Handle CastError specifically
     if (error.name === 'CastError') {
-      return res.status(400).json({ error: "Invalid userId format" });
+      return res.status(400).json({ error: "Invalid user ID format" });
     }
     res.status(500).json({ error: "Server error", details: error.message });
   }
