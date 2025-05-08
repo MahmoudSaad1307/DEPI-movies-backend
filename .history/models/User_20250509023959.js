@@ -17,10 +17,7 @@ const UserSchema = new mongoose.Schema({
     required: true,
     minlength: 6,
   },
-  bio: {
-    type: String,
-    default: "",
-  },
+  bio
   photoURL: {
     type: String,
     default:

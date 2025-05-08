@@ -12,14 +12,14 @@ const UserSchema = new mongoose.Schema({
     trim: true,
     required: true,
   },
+  firebaseUID: {
+    type: String,
+    required: true,
+  },
   password: {
     type: String,
     required: true,
     minlength: 6,
-  },
-  bio: {
-    type: String,
-    default: "",
   },
   photoURL: {
     type: String,
