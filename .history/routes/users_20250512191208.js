@@ -166,7 +166,7 @@ router.patch("/watchList", verifyToken,async (req, res) => {
   }
 });
 
-router.patch("/watched", verifyToken,async (req, res) => {
+router.patch("/:id/watched", verifyToken,async (req, res) => {
   try {
     // const userId = req.params.id;
     const { movieId, rating, ratingProvided = false } = req.body;

@@ -52,19 +52,23 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.put("/update", verifyToken,async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
+    const userId = req.params.id;
     const updates = req.body;
 
+    // Prevent updating sensitive fields like _id or password here (optional)
     if (updates._id || updates.password) {
       return res
         .status(400)
         .json({ error: "Cannot update _id or password via this route." });
     }
 
-    const user = await User.findById(req.user.id);
+    // Fetch user
+    const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
 
+    // Update only provided fields
     Object.keys(updates).forEach((key) => {
       if (key in user) {
         user[key] = updates[key];
@@ -88,7 +92,7 @@ router.get("/", async (req, res) => {
   }
 });
 router.get("/findUser/:userId", async (req, res) => {
-  const { userId } = req.params;
+  const {userId}=req.params;
   try {
     const user = await User.findById(userId).select("name photoURL movies");
     res.json(user);
@@ -106,16 +110,16 @@ router.get("/profile", verifyToken, async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
-router.patch("/favorites",verifyToken, async (req, res) => {
+router.patch("/:id/favorites", async (req, res) => {
   try {
-    // const userId = req.params.id;
+    const userId = req.params.id;
     const { movieId } = req.body;
 
     if (!movieId) {
       return res.status(400).json({ error: "movieId is required" });
     }
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(userId);
 
     if (!user) return res.status(404).json({ error: "User not found" });
 
@@ -135,16 +139,16 @@ router.patch("/favorites",verifyToken, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-router.patch("/watchList", verifyToken,async (req, res) => {
+router.patch("/:id/watchList", async (req, res) => {
   try {
-    // const userId = req.params.id;
+    const userId = req.params.id;
     const { movieId } = req.body;
 
     if (!movieId) {
       return res.status(400).json({ error: "movieId is required" });
     }
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(userId);
 
     if (!user) return res.status(404).json({ error: "User not found" });
 
@@ -166,16 +170,16 @@ router.patch("/watchList", verifyToken,async (req, res) => {
   }
 });
 
-router.patch("/watched", verifyToken,async (req, res) => {
+router.patch("/:id/watched", async (req, res) => {
   try {
-    // const userId = req.params.id;
+    const userId = req.params.id;
     const { movieId, rating, ratingProvided = false } = req.body;
 
     if (!movieId) {
       return res.status(400).json({ error: "movieId is required" });
     }
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(userId);
 
     if (!user) return res.status(404).json({ error: "User not found" });
 
@@ -196,9 +200,9 @@ router.patch("/watched", verifyToken,async (req, res) => {
       user.movies.watched = user.movies.watched.filter(
         (movie) => movie.movieId !== movieId
       );
-      user.movies.watched.push({ movieId, rating, ratingProvided });
+      user.movies.watched.push({ movieId, rating ,ratingProvided});
       await user.save();
-      return res.json({ success: true, watched: user.movies.watched });
+      return res.json({ success: true, watched: user.movies.watched ,});
     }
   } catch (err) {
     res.status(500).json({ error: err.message });

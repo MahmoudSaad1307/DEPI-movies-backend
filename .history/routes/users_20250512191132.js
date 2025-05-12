@@ -106,7 +106,7 @@ router.get("/profile", verifyToken, async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
-router.patch("/favorites",verifyToken, async (req, res) => {
+router.patch("/:id/favorites",verifyToken, async (req, res) => {
   try {
     // const userId = req.params.id;
     const { movieId } = req.body;
@@ -135,7 +135,7 @@ router.patch("/favorites",verifyToken, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-router.patch("/watchList", verifyToken,async (req, res) => {
+router.patch("/:id/watchList", verifyToken,async (req, res) => {
   try {
     // const userId = req.params.id;
     const { movieId } = req.body;
@@ -166,7 +166,7 @@ router.patch("/watchList", verifyToken,async (req, res) => {
   }
 });
 
-router.patch("/watched", verifyToken,async (req, res) => {
+router.patch("/:id/watched", verifyToken,async (req, res) => {
   try {
     // const userId = req.params.id;
     const { movieId, rating, ratingProvided = false } = req.body;
