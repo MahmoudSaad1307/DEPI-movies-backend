@@ -39,7 +39,7 @@ router.post("/:type", verifyToken,async (req, res) => {
   // const {text}=content;
   try {
     const review = new Review({
-      userId: req.user.id,
+      userId: req.user._id,
       movieId,
       content,
       isMovie,

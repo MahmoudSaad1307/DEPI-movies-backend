@@ -2,10 +2,13 @@ const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const dotenv = require("dotenv");
-dotenv.config({
-  path: "./config.env",
-});
+const dotenv = require("dotenv")
+dotenv.config(
+  {
+    path:'./config.env'
+
+  }
+);
 
 const usersRoute = require("./routes/users");
 const reviewsRoute = require("./routes/reviews");
@@ -15,13 +18,17 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MONGO_URI = process.env.MONGO_URI;
+
+const MONGO_URI =
+  process.env.MONGO_URI;
+  console.log("MONGO_URI:");
+  
 
 mongoose
   .connect(MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 30000, 
+    serverSelectionTimeoutMS: 30000, // Increase timeout to 30 seconds
     socketTimeoutMS: 45000,
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -29,6 +36,7 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log("MongoDB connection error:", err));
 
+// Use your routes
 app.use("/api/users", usersRoute);
 app.use("/api/reviews", reviewsRoute);
 app.use("/api/userList", userListRoute);

@@ -29,6 +29,7 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log("MongoDB connection error:", err));
 
+// Use your routes
 app.use("/api/users", usersRoute);
 app.use("/api/reviews", reviewsRoute);
 app.use("/api/userList", userListRoute);

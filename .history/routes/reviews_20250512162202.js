@@ -38,12 +38,7 @@ router.post("/:type", verifyToken,async (req, res) => {
   const isMovie=type=='movie';
   // const {text}=content;
   try {
-    const review = new Review({
-      userId: req.user.id,
-      movieId,
-      content,
-      isMovie,
-    });
+    const review = new Review({userId,movieId,content,isMovie});
     const saved = await review.save();
     res.json(saved);
   } catch (err) {

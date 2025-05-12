@@ -41,7 +41,7 @@ router.post("/:type", verifyToken,async (req, res) => {
     const review = new Review({
       userId: req.user.id,
       movieId,
-      content,
+        ,
       isMovie,
     });
     const saved = await review.save();

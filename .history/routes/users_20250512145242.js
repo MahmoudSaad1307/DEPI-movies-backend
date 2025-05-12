@@ -13,15 +13,32 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Email already exists" });
     }
 
+/*************  ✨ Windsurf Command 🌟  *************/
+    // Generate a salt and hash the password
+    // The salt is used to randomize the hash so that two identical passwords
+    // will not have the same hash.
+    // The cost parameter is used to slow down the hashing process which makes
+    // it more secure against brute-force attacks.
     const salt = await bcrypt.genSalt(10);
+    // Hash the password with the salt
     const hashedPassword = await bcrypt.hash(password, salt);
+/*******  76bd0d16-9ec5-4879-9e41-6a200c04efa8  *******/
 
+/*************  ✨ Windsurf Command 🌟  *************/
+    // Create a new user with the provided name, email and the hashed password
     const user = new User({ name, email, password: hashedPassword });
+
+    // Save the user to the database
+    // The `save()` method will return the saved user document,
+    // We use `toObject()` to convert it to a plain object
+    // and then delete the `password` property from it
     const saved = await user.save();
 
+    // Create a new object without the password property
     const userWithoutPassword = saved.toObject();
     delete userWithoutPassword.password;
 
+/*******  e6d38097-bdbb-4a42-9978-165462e2a666  *******/
     res.json(userWithoutPassword);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -52,20 +69,23 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.put("/update", verifyToken,async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
-    // const userId = req.params.id;
+    const userId = req.params.id;
     const updates = req.body;
 
+    // Prevent updating sensitive fields like _id or password here (optional)
     if (updates._id || updates.password) {
       return res
         .status(400)
         .json({ error: "Cannot update _id or password via this route." });
     }
 
-    const user = await User.findById(req.user.id);
+    // Fetch user
+    const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
 
+    // Update only provided fields
     Object.keys(updates).forEach((key) => {
       if (key in user) {
         user[key] = updates[key];
@@ -89,7 +109,7 @@ router.get("/", async (req, res) => {
   }
 });
 router.get("/findUser/:userId", async (req, res) => {
-  const { userId } = req.params;
+  const {userId}=req.params;
   try {
     const user = await User.findById(userId).select("name photoURL movies");
     res.json(user);
@@ -107,16 +127,16 @@ router.get("/profile", verifyToken, async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
-router.patch("/:id/favorites",verifyToken, async (req, res) => {
+router.patch("/:id/favorites", async (req, res) => {
   try {
-    // const userId = req.params.id;
+    const userId = req.params.id;
     const { movieId } = req.body;
 
     if (!movieId) {
       return res.status(400).json({ error: "movieId is required" });
     }
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(userId);
 
     if (!user) return res.status(404).json({ error: "User not found" });
 
@@ -136,16 +156,16 @@ router.patch("/:id/favorites",verifyToken, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-router.patch("/:id/watchList", verifyToken,async (req, res) => {
+router.patch("/:id/watchList", async (req, res) => {
   try {
-    // const userId = req.params.id;
+    const userId = req.params.id;
     const { movieId } = req.body;
 
     if (!movieId) {
       return res.status(400).json({ error: "movieId is required" });
     }
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(userId);
 
     if (!user) return res.status(404).json({ error: "User not found" });
 
@@ -167,16 +187,16 @@ router.patch("/:id/watchList", verifyToken,async (req, res) => {
   }
 });
 
-router.patch("/:id/watched", verifyToken,async (req, res) => {
+router.patch("/:id/watched", async (req, res) => {
   try {
-    // const userId = req.params.id;
+    const userId = req.params.id;
     const { movieId, rating, ratingProvided = false } = req.body;
 
     if (!movieId) {
       return res.status(400).json({ error: "movieId is required" });
     }
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(userId);
 
     if (!user) return res.status(404).json({ error: "User not found" });
 
@@ -197,9 +217,9 @@ router.patch("/:id/watched", verifyToken,async (req, res) => {
       user.movies.watched = user.movies.watched.filter(
         (movie) => movie.movieId !== movieId
       );
-      user.movies.watched.push({ movieId, rating, ratingProvided });
+      user.movies.watched.push({ movieId, rating ,ratingProvided});
       await user.save();
-      return res.json({ success: true, watched: user.movies.watched });
+      return res.json({ success: true, watched: user.movies.watched ,});
     }
   } catch (err) {
     res.status(500).json({ error: err.message });

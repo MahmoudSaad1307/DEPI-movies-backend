@@ -21,7 +21,7 @@ mongoose
   .connect(MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 30000, 
+    serverSelectionTimeoutMS: 30000, // Increase timeout to 30 seconds
     socketTimeoutMS: 45000,
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -29,6 +29,7 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log("MongoDB connection error:", err));
 
+// Use your routes
 app.use("/api/users", usersRoute);
 app.use("/api/reviews", reviewsRoute);
 app.use("/api/userList", userListRoute);

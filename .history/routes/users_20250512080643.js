@@ -43,29 +43,34 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign({ id: user._id }, "your_jwt_secret_key", {
       expiresIn: "7d",
     });
-    const userWithoutPassword = user.toObject();
+    const userWithoutPassword = user.toObject();    
     delete userWithoutPassword.password;
 
     res.json({ token, userWithoutPassword });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
+
+
 });
 
-router.put("/update", verifyToken,async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
-    // const userId = req.params.id;
+    const userId = req.params.id;
     const updates = req.body;
 
+    // Prevent updating sensitive fields like _id or password here (optional)
     if (updates._id || updates.password) {
       return res
         .status(400)
         .json({ error: "Cannot update _id or password via this route." });
     }
 
-    const user = await User.findById(req.user.id);
+    // Fetch user
+    const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
 
+    // Update only provided fields
     Object.keys(updates).forEach((key) => {
       if (key in user) {
         user[key] = updates[key];
@@ -89,7 +94,7 @@ router.get("/", async (req, res) => {
   }
 });
 router.get("/findUser/:userId", async (req, res) => {
-  const { userId } = req.params;
+  const {userId}=req.params;
   try {
     const user = await User.findById(userId).select("name photoURL movies");
     res.json(user);
@@ -99,28 +104,51 @@ router.get("/findUser/:userId", async (req, res) => {
   }
 });
 
+/*************  ✨ Windsurf Command 🌟  *************/
 router.get("/profile", verifyToken, async (req, res) => {
   try {
+    // 1. Get the user ID from the request
+    const userId = req.user.id;
+
+    // 2. Find the user by ID and select all fields except the password
+    const user = await User.findById(userId).select("-password");
+
+    // 3. Return the user object as JSON
     const user = await User.findById(req.user.id).select("-password");
     res.json(user);
   } catch (err) {
+    // 4. If there's an error, return a 400 response with the error message
     res.status(400).json({ error: err.message });
   }
 });
-router.patch("/:id/favorites",verifyToken, async (req, res) => {
+
+router.patch("/:id/favorites", async (req, res) => {
   try {
-    // const userId = req.params.id;
+    // 1. Get the user ID from the request
+    const userId = req.params.id;
+
+    // 2. Get the movie ID from the request
     const { movieId } = req.body;
 
+    // 3. Check if the movie ID is valid
     if (!movieId) {
+      // 4. If the movie ID is not valid, return a 400 response with an error message
       return res.status(400).json({ error: "movieId is required" });
     }
 
-    const user = await User.findById(req.user.id);
+    // 5. Find the user by ID
+    const user = await User.findById(userId);
 
+    // 6. Check if the user exists
+    if (!user) {
+      // 7. If the user does not exist, return a 404 response with an error message
+      return res.status(404).json({ error: "User not found" });
+    }
     if (!user) return res.status(404).json({ error: "User not found" });
 
+    // 8. Check if the movie ID is already in the user's favorites list
     if (!user.movies.favorites.includes(movieId)) {
+      // 9. If the movie ID is not in the list, add it to the list
       user.movies.favorites.push(movieId);
       await user.save();
       return res.json({ success: true, favorites: user.movies.favorites });
@@ -136,16 +164,17 @@ router.patch("/:id/favorites",verifyToken, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-router.patch("/:id/watchList", verifyToken,async (req, res) => {
+/*******  8ea3d20c-c12e-47db-a59a-48def31f12f6  *******/
+router.patch("/:id/watchList", async (req, res) => {
   try {
-    // const userId = req.params.id;
+    const userId = req.params.id;
     const { movieId } = req.body;
 
     if (!movieId) {
       return res.status(400).json({ error: "movieId is required" });
     }
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(userId);
 
     if (!user) return res.status(404).json({ error: "User not found" });
 
@@ -167,16 +196,16 @@ router.patch("/:id/watchList", verifyToken,async (req, res) => {
   }
 });
 
-router.patch("/:id/watched", verifyToken,async (req, res) => {
+router.patch("/:id/watched", async (req, res) => {
   try {
-    // const userId = req.params.id;
+    const userId = req.params.id;
     const { movieId, rating, ratingProvided = false } = req.body;
 
     if (!movieId) {
       return res.status(400).json({ error: "movieId is required" });
     }
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(userId);
 
     if (!user) return res.status(404).json({ error: "User not found" });
 
@@ -197,14 +226,16 @@ router.patch("/:id/watched", verifyToken,async (req, res) => {
       user.movies.watched = user.movies.watched.filter(
         (movie) => movie.movieId !== movieId
       );
-      user.movies.watched.push({ movieId, rating, ratingProvided });
+      user.movies.watched.push({ movieId, rating ,ratingProvided});
       await user.save();
-      return res.json({ success: true, watched: user.movies.watched });
+      return res.json({ success: true, watched: user.movies.watched ,});
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
+
 // router.patch("/:id/favorites", async (req, res) => {
 //   try {
 //     const userId = req.params.id;
