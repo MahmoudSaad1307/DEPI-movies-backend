@@ -2,12 +2,13 @@ const express = require("express");
 const router = express.Router();
 const Review = require("../models/Review");
 const User = require("../models/User");
-const mongoose = require("mongoose"); 
+const mongoose = require("mongoose"); // Add this line
 const verifyToken = require("../auth");
 router.get("/user/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 
+    // Validate userId
     if (!userId) {
       return res.status(400).json({ error: "userId is required" });
     }
@@ -15,6 +16,7 @@ router.get("/user/:userId", async (req, res) => {
       return res.status(400).json({ error: "Invalid userId format" });
     }
 
+    // Check if user exists
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
 

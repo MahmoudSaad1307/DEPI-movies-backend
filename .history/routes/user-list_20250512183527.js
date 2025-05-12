@@ -63,18 +63,21 @@ router.put("/:id", async (req, res) => {
   try {
     const { movieId, action } = req.body;
 
+    // Validate required fields
     if (  !movieId || !action) {
       return res
         .status(400)
         .json({ error: "UserId, movieId, and action are required" });
     }
 
+    // Validate that the action is either 'add' or 'remove'
     if (action !== "add" && action !== "remove") {
       return res
         .status(400)
         .json({ error: 'Action must be either "add" or "remove"' });
     }
 
+    // Find the user's list by the list ID and userId
     const list = await UserList.findOne({ _id: req.params.id, userId: req.user.id });
     if (!list) {
       return res
@@ -82,23 +85,26 @@ router.put("/:id", async (req, res) => {
         .json({ error: "List not found or not authorized" });
     }
 
+    // Add movie to the list
     if (action === "add") {
       if (!list.movies.includes(movieId)) {
-        list.movies.push(movieId); 
+        list.movies.push(movieId); // Add movie to the list if it's not already there
       } else {
         return res.status(400).json({ error: "Movie already in the list" });
       }
     }
 
+    // Remove movie from the list
     if (action === "remove") {
       const movieIndex = list.movies.indexOf(movieId);
       if (movieIndex !== -1) {
-        list.movies.splice(movieIndex, 1); 
+        list.movies.splice(movieIndex, 1); // Remove movie from the list
       } else {
         return res.status(400).json({ error: "Movie not found in the list" });
       }
     }
 
+    // Save the updated list
     const updatedList = await list.save();
     res.json(updatedList);
   } catch (err) {

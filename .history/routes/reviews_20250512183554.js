@@ -2,12 +2,13 @@ const express = require("express");
 const router = express.Router();
 const Review = require("../models/Review");
 const User = require("../models/User");
-const mongoose = require("mongoose"); 
+const mongoose = require("mongoose"); // Add this line
 const verifyToken = require("../auth");
 router.get("/user/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 
+    // Validate userId
     if (!userId) {
       return res.status(400).json({ error: "userId is required" });
     }

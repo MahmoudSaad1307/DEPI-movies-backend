@@ -63,12 +63,14 @@ router.put("/:id", async (req, res) => {
   try {
     const { movieId, action } = req.body;
 
+    // Validate required fields
     if (  !movieId || !action) {
       return res
         .status(400)
         .json({ error: "UserId, movieId, and action are required" });
     }
 
+    // Validate that the action is either 'add' or 'remove'
     if (action !== "add" && action !== "remove") {
       return res
         .status(400)

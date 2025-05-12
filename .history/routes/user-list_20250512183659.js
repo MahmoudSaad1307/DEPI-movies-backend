@@ -63,6 +63,7 @@ router.put("/:id", async (req, res) => {
   try {
     const { movieId, action } = req.body;
 
+    // Validate required fields
     if (  !movieId || !action) {
       return res
         .status(400)

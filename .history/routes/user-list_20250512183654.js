@@ -63,18 +63,21 @@ router.put("/:id", async (req, res) => {
   try {
     const { movieId, action } = req.body;
 
+    // Validate required fields
     if (  !movieId || !action) {
       return res
         .status(400)
         .json({ error: "UserId, movieId, and action are required" });
     }
 
+    // Validate that the action is either 'add' or 'remove'
     if (action !== "add" && action !== "remove") {
       return res
         .status(400)
         .json({ error: 'Action must be either "add" or "remove"' });
     }
 
+    // Find the user's list by the list ID and userId
     const list = await UserList.findOne({ _id: req.params.id, userId: req.user.id });
     if (!list) {
       return res
