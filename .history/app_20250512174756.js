@@ -33,7 +33,7 @@ app.use("/api/users", usersRoute);
 app.use("/api/reviews", reviewsRoute);
 app.use("/api/userList", userListRoute);
 
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on Port ${PORT}`);
 });

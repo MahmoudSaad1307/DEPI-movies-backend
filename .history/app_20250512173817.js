@@ -15,10 +15,10 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MONGO_URI = process.env.MONGO_URI;
+// const MONGO_URI = process.env.MONGO_URI;
 
 mongoose
-  .connect(MONGO_URI, {
+  .connect("mongodb+srv://Malik:Malik20@cluster0.49qdtnt.mongodb.net/movieApp", {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     serverSelectionTimeoutMS: 30000, 
@@ -33,7 +33,7 @@ app.use("/api/users", usersRoute);
 app.use("/api/reviews", reviewsRoute);
 app.use("/api/userList", userListRoute);
 
-const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
+const PORT = process.env.PORT || 3000;
+app.listen(3000, () => {
   console.log(`Server running on Port ${PORT}`);
 });
