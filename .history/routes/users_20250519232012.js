@@ -5,12 +5,6 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const verifyToken = require("../auth");
 
-
-  
-
-  
-
-
 router.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
   try {
@@ -25,16 +19,10 @@ router.post("/register", async (req, res) => {
     const user = new User({ name, email, password: hashedPassword });
     const saved = await user.save();
 
-    // Create token
-    const token = jwt.sign({ id: saved._id }, "your_jwt_secret_key", {
-      expiresIn: "7d",
-    });
-
-    // Remove password before sending user data
     const userWithoutPassword = saved.toObject();
     delete userWithoutPassword.password;
 
-    res.json({ token, user: userWithoutPassword });
+    res.json(userWithoutPassword);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

@@ -10,8 +10,15 @@ const verifyToken = require("../auth");
 
   
 
+    const userWithoutPassword = saved.toObject();
+    delete userWithoutPassword.password;
 
-router.post("/register", async (req, res) => {
+    res.json(userWithoutPassword);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+/*router.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
   try {
     const existingUser = await User.findOne({ email });
@@ -39,7 +46,7 @@ router.post("/register", async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
-
+*/
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;

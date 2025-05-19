@@ -11,7 +11,7 @@ const verifyToken = require("../auth");
   
 
 
-router.post("/register", async (req, res) => {
+/*router.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
   try {
     const existingUser = await User.findOne({ email });
@@ -39,7 +39,7 @@ router.post("/register", async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
-
+*/
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;

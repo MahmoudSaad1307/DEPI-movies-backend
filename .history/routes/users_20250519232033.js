@@ -6,12 +6,21 @@ const jwt = require("jsonwebtoken");
 const verifyToken = require("../auth");
 
 
-  
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-  
+    const user = new User({ name, email, password: hashedPassword });
+    const saved = await user.save();
 
+    const userWithoutPassword = saved.toObject();
+    delete userWithoutPassword.password;
 
-router.post("/register", async (req, res) => {
+    res.json(userWithoutPassword);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+/*router.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
   try {
     const existingUser = await User.findOne({ email });
@@ -39,7 +48,7 @@ router.post("/register", async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
-
+*/
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
