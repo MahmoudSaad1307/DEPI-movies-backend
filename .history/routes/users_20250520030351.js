@@ -3,37 +3,53 @@ const router = express.Router();
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const verifyToken = require("../auth");
+const {verifyToken,} = require("../auth");
 
 
+  router.post("/google-login", async (req, res) => {
+  console.log("Google login request received:", req.body);
+  const { idToken, email, displayName, uid, photoURL } = req.body;
   
-router.post("/google-login", async (req, res) => {
-  
-  const {  email, displayName, uid, photoURL } = req.body;
+  if (!email || !uid) {
+    return res.status(400).json({ error: "Missing required Google authentication data" });
+  }
   
   try {
-    // Verify the token here if needed using Firebase Admin SDK
-    // In a production app, you should validate the token server-side
-  
     // Check if user exists in your MongoDB database
     let user = await User.findOne({ email });
     
     if (!user) {
-      // Create a new user in your MongoDB database
+      console.log("Creating new user with Google account");
+      // Create a new user in your MongoDB database with your schema
+      const randomPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10);
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(randomPassword, salt);
+      
       user = new User({
-        name: displayName,
+        name: displayName || email.split('@')[0],
         email: email,
+        password: hashedPassword, // Required field, but won't be used for login
         googleId: uid,
-        photoURL: photoURL,
-        // Set other fields as needed
+        photoURL: photoURL || undefined, // Use default if not provided
+        preferences: {
+          favoriteGenres: [],
+          adultContent: false,
+        },
+        movies: {
+          favorites: [],
+          watchlist: [],
+          watched: [],
+        }
       });
       await user.save();
     } else if (!user.googleId) {
+      console.log("Linking existing user to Google account");
       // If user exists but doesn't have googleId (they previously registered with email/password)
       // Link their account with Google
       user.googleId = uid;
-      if (!user.profilePicture && photoURL) {
-        user.profilePicture = photoURL;
+      if (photoURL && user.photoURL === "https://firebasestorage.googleapis.com/v0/b/social-app-834ec.appspot.com/o/Screenshot_2025-04-26_200917-removebg-preview.png?alt=media&token=ed309263-af79-4a99-bba1-13ee7ff0fa4a") {
+        // Only update photo if they're using the default
+        user.photoURL = photoURL;
       }
       await user.save();
     }
@@ -45,14 +61,16 @@ router.post("/google-login", async (req, res) => {
     
     // Return user data and token
     const userWithoutPassword = user.toObject();
-    if (userWithoutPassword.password) delete userWithoutPassword.password;
+    delete userWithoutPassword.password;
     
+    console.log("Google authentication successful for:", email);
     res.json({ token, user: userWithoutPassword });
   } catch (err) {
     console.error("Google authentication error:", err);
-    res.status(400).json({ error: err.message || "Authentication failed" });
+    res.status(500).json({ error: err.message || "Authentication failed" });
   }
 });
+
   
 
 

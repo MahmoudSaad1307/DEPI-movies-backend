@@ -7,55 +7,67 @@ const verifyToken = require("../auth");
 
 
   
-router.post("/google-login", async (req, res) => {
+
   
-  const {  email, displayName, uid, photoURL } = req.body;
-  
+
+// CLIENT-SIDE IMPLEMENTATION
+
+// 1. Add this function to your Firebase service file (e.g., firebaseService.js)
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth, db } from "./firebase"; // Your existing Firebase imports
+
+// Google Sign-in function for client-side
+export const signInWithGoogle = async () => {
   try {
-    // Verify the token here if needed using Firebase Admin SDK
-    // In a production app, you should validate the token server-side
-  
-    // Check if user exists in your MongoDB database
-    let user = await User.findOne({ email });
+    const provider = new GoogleAuthProvider();
+    // Add scopes if needed
+    provider.addScope('https://www.googleapis.com/auth/userinfo.profile');
+    provider.addScope('https://www.googleapis.com/auth/userinfo.email');
     
-    if (!user) {
-      // Create a new user in your MongoDB database
-      user = new User({
-        name: displayName,
-        email: email,
-        googleId: uid,
-        photoURL: photoURL,
-        // Set other fields as needed
-      });
-      await user.save();
-    } else if (!user.googleId) {
-      // If user exists but doesn't have googleId (they previously registered with email/password)
-      // Link their account with Google
-      user.googleId = uid;
-      if (!user.profilePicture && photoURL) {
-        user.profilePicture = photoURL;
-      }
-      await user.save();
-    }
+    const result = await signInWithPopup(auth, provider);
     
-    // Create JWT token for your app using your existing method
-    const token = jwt.sign({ id: user._id }, "your_jwt_secret_key", {
-      expiresIn: "7d",
+    // This gives you a Google Access Token
+    const credential = GoogleAuthProvider.credentialFromResult(result);
+    const token = credential.idToken;
+    const user = result.user;
+    
+    // Send the token to your backend
+    const backendResponse = await sendTokenToBackend(user, token);
+    return backendResponse;
+  } catch (error) {
+    console.error("Google sign-in error:", error);
+    throw error;
+  }
+};
+
+// Function to send the token to your backend
+const sendTokenToBackend = async (firebaseUser, idToken) => {
+  try {
+    const response = await fetch('/api/auth/google-login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        idToken,
+        displayName: firebaseUser.displayName,
+        email: firebaseUser.email,
+        uid: firebaseUser.uid,
+        photoURL: firebaseUser.photoURL,
+      }),
     });
     
-    // Return user data and token
-    const userWithoutPassword = user.toObject();
-    if (userWithoutPassword.password) delete userWithoutPassword.password;
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to authenticate with backend');
+    }
     
-    res.json({ token, user: userWithoutPassword });
-  } catch (err) {
-    console.error("Google authentication error:", err);
-    res.status(400).json({ error: err.message || "Authentication failed" });
+    return await response.json();
+  } catch (error) {
+    console.error("Backend authentication error:", error);
+    throw error;
   }
-});
-  
-
-
+};
 router.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
   try {

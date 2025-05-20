@@ -15,7 +15,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const MONGO_URI = process.env.MONGO_URI||"mongodb+srv://Malik:Malik20@cluster0.49odtnt.mongodb.net/movieApp";
+const MONGO_URI = process.env.MONGO_URI||"=mongodb+srv://Malik:Malik20@cluster0.49odtnt.mongodb.net/movieApp";
 
 mongoose
   .connect(MONGO_URI, {

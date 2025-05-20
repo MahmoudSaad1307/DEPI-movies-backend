@@ -7,52 +7,7 @@ const verifyToken = require("../auth");
 
 
   
-router.post("/google-login", async (req, res) => {
-  
-  const {  email, displayName, uid, photoURL } = req.body;
-  
-  try {
-    // Verify the token here if needed using Firebase Admin SDK
-    // In a production app, you should validate the token server-side
-  
-    // Check if user exists in your MongoDB database
-    let user = await User.findOne({ email });
-    
-    if (!user) {
-      // Create a new user in your MongoDB database
-      user = new User({
-        name: displayName,
-        email: email,
-        googleId: uid,
-        photoURL: photoURL,
-        // Set other fields as needed
-      });
-      await user.save();
-    } else if (!user.googleId) {
-      // If user exists but doesn't have googleId (they previously registered with email/password)
-      // Link their account with Google
-      user.googleId = uid;
-      if (!user.profilePicture && photoURL) {
-        user.profilePicture = photoURL;
-      }
-      await user.save();
-    }
-    
-    // Create JWT token for your app using your existing method
-    const token = jwt.sign({ id: user._id }, "your_jwt_secret_key", {
-      expiresIn: "7d",
-    });
-    
-    // Return user data and token
-    const userWithoutPassword = user.toObject();
-    if (userWithoutPassword.password) delete userWithoutPassword.password;
-    
-    res.json({ token, user: userWithoutPassword });
-  } catch (err) {
-    console.error("Google authentication error:", err);
-    res.status(400).json({ error: err.message || "Authentication failed" });
-  }
-});
+
   
 
 

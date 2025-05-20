@@ -5,8 +5,10 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  googleId: String,
-
+  googleId: {
+    type: String,
+    // This will store the Google UID
+  },
   email: {
     type: String,
     unique: true,
@@ -16,10 +18,8 @@ const UserSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: function() {
-    return !this.googleId; // Only required if not a Google user
-  },
-    // minlength: 6,
+    required: true,
+    minlength: 6,
   },
   bio: {
     type: String,
@@ -48,7 +48,7 @@ const UserSchema = new mongoose.Schema({
       {
         movieId: { type: Number, required: true },
         rating: Number,
-        ratingProvided: Boolean,
+        ratingProvided:Boolean,
         watchedAt: { type: Date, default: Date.now },
       },
     ],

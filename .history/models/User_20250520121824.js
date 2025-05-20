@@ -19,7 +19,7 @@ const UserSchema = new mongoose.Schema({
     required: function() {
     return !this.googleId; // Only required if not a Google user
   },
-    // minlength: 6,
+    minlength: 6,
   },
   bio: {
     type: String,

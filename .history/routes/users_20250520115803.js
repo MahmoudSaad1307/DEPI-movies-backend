@@ -8,13 +8,12 @@ const verifyToken = require("../auth");
 
   
 router.post("/google-login", async (req, res) => {
-  
-  const {  email, displayName, uid, photoURL } = req.body;
+  const { idToken, email, displayName, uid, photoURL } = req.body;
   
   try {
     // Verify the token here if needed using Firebase Admin SDK
     // In a production app, you should validate the token server-side
-  
+    
     // Check if user exists in your MongoDB database
     let user = await User.findOne({ email });
     
