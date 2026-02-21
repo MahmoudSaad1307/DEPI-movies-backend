@@ -2,20 +2,21 @@ const express = require("express");
 const router = express.Router();
 const UserList = require("../models/UserList");
 const verifyToken = require("../auth");
+const mongoose = require("mongoose");
 // const jwt = require('jsonwebtoken');
 // const verifyToken = require('../auth');
 
 router.post("/", verifyToken, async (req, res) => {
   const { title, movies, description } = req.body;
   try {
-    if ( !title) {
-      return res.status(400).json({ error: "title, are required" });
+    if (!title) {
+      return res.status(400).json({ error: "title is required" });
     }
 
     const newList = new UserList({
       userId: req.user.id,
       title,
-      movies,
+      movies: Array.isArray(movies) ? movies.map(Number).filter((id) => !Number.isNaN(id)) : [],
       description,
     });
 
@@ -26,15 +27,9 @@ router.post("/", verifyToken, async (req, res) => {
   }
 });
 
-router.get("/my-lists/", async (req, res) => {
+router.get("/my-lists/", verifyToken, async (req, res) => {
   try {
-    const { userId } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({ error: "UserId is required" });
-    }
-
-    const lists = await UserList.find({ userId });
+    const lists = await UserList.find({ userId: req.user.id });
     res.json(lists);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -43,6 +38,9 @@ router.get("/my-lists/", async (req, res) => {
 
 router.delete("/:id", verifyToken, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: "Invalid list id" });
+    }
     const deletedList = await UserList.findOneAndDelete({
       _id: req.params.id,
       userId: req.user.id,
@@ -59,11 +57,12 @@ router.delete("/:id", verifyToken, async (req, res) => {
 });
 
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", verifyToken, async (req, res) => {
   try {
     const { movieId, action } = req.body;
 
-    if (  !movieId || !action) {
+    const normalizedMovieId = Number(movieId);
+    if (!movieId || Number.isNaN(normalizedMovieId) || !action) {
       return res
         .status(400)
         .json({ error: "UserId, movieId, and action are required" });
@@ -75,7 +74,13 @@ router.put("/:id", async (req, res) => {
         .json({ error: 'Action must be either "add" or "remove"' });
     }
 
-    const list = await UserList.findOne({ _id: req.params.id, userId: req.user.id });
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: "Invalid list id" });
+    }
+    const list = await UserList.findOne({
+      _id: req.params.id,
+      userId: req.user.id,
+    });
     if (!list) {
       return res
         .status(404)
@@ -83,17 +88,17 @@ router.put("/:id", async (req, res) => {
     }
 
     if (action === "add") {
-      if (!list.movies.includes(movieId)) {
-        list.movies.push(movieId); 
+      if (!list.movies.includes(normalizedMovieId)) {
+        list.movies.push(normalizedMovieId);
       } else {
         return res.status(400).json({ error: "Movie already in the list" });
       }
     }
 
     if (action === "remove") {
-      const movieIndex = list.movies.indexOf(movieId);
+      const movieIndex = list.movies.indexOf(normalizedMovieId);
       if (movieIndex !== -1) {
-        list.movies.splice(movieIndex, 1); 
+        list.movies.splice(movieIndex, 1);
       } else {
         return res.status(400).json({ error: "Movie not found in the list" });
       }

@@ -5,24 +5,30 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const verifyToken = require("../auth");
 
+const JWT_SECRET = process.env.JWT_SECRET;
 
-  
 router.post("/google-login", async (req, res) => {
-  
-  const {  email, displayName, uid, photoURL } = req.body;
+  const { email, displayName, uid, photoURL } = req.body;
+  if (!JWT_SECRET) {
+    return res.status(500).json({ error: "JWT secret is not set" });
+  }
+  if (!email || !uid || !displayName) {
+    return res.status(400).json({ error: "name, email, and uid are required" });
+  }
+  const normalizedEmail = String(email).trim().toLowerCase();
   
   try {
     // Verify the token here if needed using Firebase Admin SDK
     // In a production app, you should validate the token server-side
   
     // Check if user exists in your MongoDB database
-    let user = await User.findOne({ email });
+    let user = await User.findOne({ email: normalizedEmail });
     
     if (!user) {
       // Create a new user in your MongoDB database
       user = new User({
         name: displayName,
-        email: email,
+        email: normalizedEmail,
         googleId: uid,
         photoURL: photoURL,
         // Set other fields as needed
@@ -32,14 +38,13 @@ router.post("/google-login", async (req, res) => {
       // If user exists but doesn't have googleId (they previously registered with email/password)
       // Link their account with Google
       user.googleId = uid;
-      if (!user.profilePicture && photoURL) {
-        user.profilePicture = photoURL;
+      if (!user.photoURL && photoURL) {
+        user.photoURL = photoURL;
       }
       await user.save();
     }
     
-    // Create JWT token for your app using your existing method
-    const token = jwt.sign({ id: user._id }, "your_jwt_secret_key", {
+    const token = jwt.sign({ id: user._id }, JWT_SECRET, {
       expiresIn: "7d",
     });
     
@@ -59,7 +64,19 @@ router.post("/google-login", async (req, res) => {
 router.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
   try {
-    const existingUser = await User.findOne({ email });
+    if (!JWT_SECRET) {
+      return res.status(500).json({ error: "JWT secret is not set" });
+    }
+    if (!name || !email || !password) {
+      return res
+        .status(400)
+        .json({ error: "name, email, and password are required" });
+    }
+    if (String(password).length < 6) {
+      return res.status(400).json({ error: "Password too short" });
+    }
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(400).json({ error: "Email already exists" });
     }
@@ -67,11 +84,11 @@ router.post("/register", async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const user = new User({ name, email, password: hashedPassword });
+    const user = new User({ name, email: normalizedEmail, password: hashedPassword });
     const saved = await user.save();
 
     // Create token
-    const token = jwt.sign({ id: saved._id }, "your_jwt_secret_key", {
+    const token = jwt.sign({ id: saved._id }, JWT_SECRET, {
       expiresIn: "7d",
     });
 
@@ -88,8 +105,15 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (!JWT_SECRET) {
+      return res.status(500).json({ error: "JWT secret is not set" });
+    }
+    if (!email || !password) {
+      return res.status(400).json({ error: "email and password are required" });
+    }
+    const normalizedEmail = String(email).trim().toLowerCase();
 
-    const user = await User.findOne({ email }).select("+password");
+    const user = await User.findOne({ email: normalizedEmail }).select("+password");
     if (!user) {
       return res.status(400).json({ error: "Invalid email or password" });
     }
@@ -98,19 +122,19 @@ router.post("/login", async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({ error: "Invalid email or password" });
     }
-    const token = jwt.sign({ id: user._id }, "your_jwt_secret_key", {
+    const token = jwt.sign({ id: user._id }, JWT_SECRET, {
       expiresIn: "7d",
     });
     const userWithoutPassword = user.toObject();
     delete userWithoutPassword.password;
 
-    res.json({ token, userWithoutPassword });
+    res.json({ token, user: userWithoutPassword });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
-router.put("/update", verifyToken,async (req, res) => {
+router.put("/update", verifyToken, async (req, res) => {
   try {
     const updates = req.body;
 
@@ -138,7 +162,7 @@ router.put("/update", verifyToken,async (req, res) => {
 
 router.get("/", async (req, res) => {
   try {
-    const users = await User.find();
+    const users = await User.find().select("-password");
     res.json(users);
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -148,6 +172,9 @@ router.get("/", async (req, res) => {
 router.get("/findUser/:userId", async (req, res) => {
   const { userId } = req.params;
   try {
+    if (!userId || !userId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ error: "Invalid userId format" });
+    }
     const user = await User.findById(userId).select("name photoURL movies");
     res.json(user);
   } catch (error) {
@@ -164,12 +191,12 @@ router.get("/profile", verifyToken, async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
-router.patch("/favorites",verifyToken, async (req, res) => {
+router.patch("/favorites", verifyToken, async (req, res) => {
   try {
-    // const userId = req.params.id;
     const { movieId } = req.body;
 
-    if (!movieId) {
+    const normalizedMovieId = Number(movieId);
+    if (!movieId || Number.isNaN(normalizedMovieId)) {
       return res.status(400).json({ error: "movieId is required" });
     }
 
@@ -177,12 +204,14 @@ router.patch("/favorites",verifyToken, async (req, res) => {
 
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    if (!user.movies.favorites.includes(movieId)) {
-      user.movies.favorites.push(movieId);
+    if (!user.movies.favorites.includes(normalizedMovieId)) {
+      user.movies.favorites.push(normalizedMovieId);
       await user.save();
       return res.json({ success: true, favorites: user.movies.favorites });
     } else {
-      const updatedMovies = user.movies.favorites.filter((e) => e !== movieId);
+      const updatedMovies = user.movies.favorites.filter(
+        (e) => e !== normalizedMovieId
+      );
 
       user.movies.favorites = updatedMovies;
 
@@ -193,12 +222,12 @@ router.patch("/favorites",verifyToken, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-router.patch("/watchList", verifyToken,async (req, res) => {
+router.patch("/watchList", verifyToken, async (req, res) => {
   try {
-    // const userId = req.params.id;
     const { movieId } = req.body;
 
-    if (!movieId) {
+    const normalizedMovieId = Number(movieId);
+    if (!movieId || Number.isNaN(normalizedMovieId)) {
       return res.status(400).json({ error: "movieId is required" });
     }
 
@@ -206,16 +235,14 @@ router.patch("/watchList", verifyToken,async (req, res) => {
 
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    if (user.movies.watchlist.some((movie) => movie.movieId === movieId)) {
+    if (user.movies.watchlist.some((movie) => movie.movieId === normalizedMovieId)) {
       user.movies.watchlist = user.movies.watchlist.filter(
-        (movie) => movie.movieId !== movieId
+        (movie) => movie.movieId !== normalizedMovieId
       );
       await user.save();
       return res.json({ success: true, watchlist: user.movies.watchlist });
     } else {
-      // user.movies.watchlist=[{}]
-
-      user.movies.watchlist.push({ movieId });
+      user.movies.watchlist.push({ movieId: normalizedMovieId });
       await user.save();
       return res.json({ success: true, watchlist: user.movies.watchlist });
     }
@@ -224,12 +251,12 @@ router.patch("/watchList", verifyToken,async (req, res) => {
   }
 });
 
-router.patch("/watched", verifyToken,async (req, res) => {
+router.patch("/watched", verifyToken, async (req, res) => {
   try {
-    // const userId = req.params.id;
     const { movieId, rating, ratingProvided = false } = req.body;
 
-    if (!movieId) {
+    const normalizedMovieId = Number(movieId);
+    if (!movieId || Number.isNaN(normalizedMovieId)) {
       return res.status(400).json({ error: "movieId is required" });
     }
 
@@ -238,23 +265,26 @@ router.patch("/watched", verifyToken,async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const currentMovie = user.movies.watched.find(
-      (movie) => movie.movieId == movieId
+      (movie) => movie.movieId == normalizedMovieId
     );
-    // const currentRate=currentMovie.rating;
     if (
-      user.movies.watched.some((movie) => movie.movieId === movieId) &&
+      user.movies.watched.some((movie) => movie.movieId === normalizedMovieId) &&
       !ratingProvided
     ) {
       user.movies.watched = user.movies.watched.filter(
-        (movie) => movie.movieId !== movieId
+        (movie) => movie.movieId !== normalizedMovieId
       );
       await user.save();
       return res.json({ success: true, watched: user.movies.watched });
     } else {
       user.movies.watched = user.movies.watched.filter(
-        (movie) => movie.movieId !== movieId
+        (movie) => movie.movieId !== normalizedMovieId
       );
-      user.movies.watched.push({ movieId, rating, ratingProvided });
+      user.movies.watched.push({
+        movieId: normalizedMovieId,
+        rating,
+        ratingProvided,
+      });
       await user.save();
       return res.json({ success: true, watched: user.movies.watched });
     }

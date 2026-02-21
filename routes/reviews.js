@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Review = require("../models/Review");
 const User = require("../models/User");
-const mongoose = require("mongoose"); 
+const mongoose = require("mongoose");
 const verifyToken = require("../auth");
 router.get("/user/:userId", async (req, res) => {
   try {
@@ -29,15 +29,21 @@ router.get("/user/:userId", async (req, res) => {
   }
 });
 
-router.post("/:type", verifyToken,async (req, res) => {
-  const { movieId,content } = req.body;
-  const {type}=req.params;
-  const isMovie=type=='movie';
-  // const {text}=content;
+router.post("/:type", verifyToken, async (req, res) => {
+  const { movieId, content } = req.body;
+  const { type } = req.params;
+  const isMovie = type === "movie";
+  if (type !== "movie" && type !== "tv") {
+    return res.status(400).json({ error: "Invalid type" });
+  }
+  const normalizedMovieId = Number(movieId);
+  if (!movieId || Number.isNaN(normalizedMovieId)) {
+    return res.status(400).json({ error: "movieId is required" });
+  }
   try {
     const review = new Review({
       userId: req.user.id,
-      movieId,
+      movieId: normalizedMovieId,
       content,
       isMovie,
     });
@@ -49,9 +55,16 @@ router.post("/:type", verifyToken,async (req, res) => {
 });
 
 router.get("/:type/:movieId", async (req, res) => {
-  const { type,movieId } = req.params;
-  const isMovie=type=='movie';
-  const reviews = await Review.find({ movieId:movieId,isMovie });
+  const { type, movieId } = req.params;
+  const isMovie = type === "movie";
+  if (type !== "movie" && type !== "tv") {
+    return res.status(400).json({ error: "Invalid type" });
+  }
+  const normalizedMovieId = Number(movieId);
+  if (!movieId || Number.isNaN(normalizedMovieId)) {
+    return res.status(400).json({ error: "movieId is required" });
+  }
+  const reviews = await Review.find({ movieId: normalizedMovieId, isMovie });
   res.json(reviews);
 });
 
