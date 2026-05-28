@@ -1,7 +1,13 @@
 const pool = require("../db/pool");
 
-const DEFAULT_PHOTO =
-  "https://firebasestorage.googleapis.com/v0/b/social-app-834ec.appspot.com/o/Screenshot_2025-04-26_200917-removebg-preview.png?alt=media&token=ed309263-af79-4a99-bba1-13ee7ff0fa4a";
+// Fallback avatar — uses UI Avatars (free, no auth required)
+// Generates a letter-based avatar from the user's name
+function getDefaultPhoto(name) {
+  const encoded = encodeURIComponent(name || "User");
+  return `https://ui-avatars.com/api/?name=${encoded}&background=1a1a2e&color=00bcd4&size=200&bold=true`;
+}
+
+const DEFAULT_PHOTO = getDefaultPhoto("User");
 
 // Parse JSONB column safely (pg auto-parses, but be defensive)
 function parseJson(value, fallback) {
@@ -23,7 +29,7 @@ function rowToUser(row) {
     email: row.email,
     googleId: row.google_id || null,
     bio: row.bio || "",
-    photoURL: row.photo_url || DEFAULT_PHOTO,
+    photoURL: row.photo_url || getDefaultPhoto(row.name),
     preferences: {
       favoriteGenres: row.fav_genres || [],
       adultContent: row.adult_content || false,
