@@ -1,34 +1,30 @@
 const express = require("express");
 const router = express.Router();
-const Review = require("../models/Review");
-const User = require("../models/User");
-const mongoose = require("mongoose");
+const { findByUserId, findByMovieId, createReview } = require("../models/Review");
+const { findById: findUserById } = require("../models/User");
 const verifyToken = require("../auth");
+
+// GET /user/:userId — all reviews by a user
 router.get("/user/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-
-    if (!userId) {
-      return res.status(400).json({ error: "userId is required" });
-    }
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
+    const parsedId = parseInt(userId, 10);
+    if (!userId || isNaN(parsedId) || parsedId <= 0) {
       return res.status(400).json({ error: "Invalid userId format" });
     }
 
-    const user = await User.findById(userId);
+    const user = await findUserById(parsedId);
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    const reviews = await Review.find({ userId });
+    const reviews = await findByUserId(parsedId);
     res.json(reviews);
   } catch (error) {
-    console.error('Error in POST /myReviews:', error);
-    if (error.name === 'CastError') {
-      return res.status(400).json({ error: "Invalid userId format" });
-    }
+    console.error("Error in GET /user/:userId:", error);
     res.status(500).json({ error: "Server error", details: error.message });
   }
 });
 
+// POST /:type — create a review (movie or tv)
 router.post("/:type", verifyToken, async (req, res) => {
   const { movieId, content } = req.body;
   const { type } = req.params;
@@ -41,19 +37,19 @@ router.post("/:type", verifyToken, async (req, res) => {
     return res.status(400).json({ error: "movieId is required" });
   }
   try {
-    const review = new Review({
+    const review = await createReview({
       userId: req.user.id,
       movieId: normalizedMovieId,
       content,
       isMovie,
     });
-    const saved = await review.save();
-    res.json(saved);
+    res.json(review);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
+// GET /:type/:movieId — all reviews for a movie/show
 router.get("/:type/:movieId", async (req, res) => {
   const { type, movieId } = req.params;
   const isMovie = type === "movie";
@@ -64,7 +60,7 @@ router.get("/:type/:movieId", async (req, res) => {
   if (!movieId || Number.isNaN(normalizedMovieId)) {
     return res.status(400).json({ error: "movieId is required" });
   }
-  const reviews = await Review.find({ movieId: normalizedMovieId, isMovie });
+  const reviews = await findByMovieId(normalizedMovieId, isMovie);
   res.json(reviews);
 });
 
