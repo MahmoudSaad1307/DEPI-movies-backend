@@ -1,10 +1,7 @@
 const express = require("express");
 const multer = require("multer");
 const { uploadBuffer } = require("../lib/cloudinary");
-const { OAuth2Client } = require("google-auth-library");
-
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
+// No heavy external authentication library needed for access_token verification
 
 // Accept image files only, max 5 MB
 const upload = multer({
@@ -41,27 +38,30 @@ function withoutPassword(user) {
   return rest;
 }
 
-// POST /google-login — verify Google ID token, then find or create user
+// POST /google-login — verify Google Access Token via Google API, then find or create user
 router.post("/google-login", async (req, res) => {
-  const { idToken } = req.body;
+  const { accessToken } = req.body;
 
   if (!JWT_SECRET) {
     return res.status(500).json({ error: "JWT secret is not set" });
   }
-  if (!GOOGLE_CLIENT_ID) {
-    return res.status(500).json({ error: "Google Client ID is not configured" });
-  }
-  if (!idToken) {
-    return res.status(400).json({ error: "idToken is required" });
+  if (!accessToken) {
+    return res.status(400).json({ error: "accessToken is require" });
   }
 
   try {
-    // Verify the Google ID token cryptographically
-    const ticket = await googleClient.verifyIdToken({
-      idToken,
-      audience: GOOGLE_CLIENT_ID,
+    // Cryptographically secure: Fetch user info directly from Google's API using the provided Access Token
+    const googleResponse = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
     });
-    const payload = ticket.getPayload();
+
+    if (!googleResponse.ok) {
+      throw new Error("Failed to verify access token with Google");
+    }
+
+    const payload = await googleResponse.json();
 
     const { email, name, picture, sub: googleId } = payload;
     const normalizedEmail = String(email).trim().toLowerCase();
@@ -86,7 +86,7 @@ router.post("/google-login", async (req, res) => {
     res.json({ token, user: withoutPassword(user) });
   } catch (err) {
     console.error("Google authentication error:", err);
-    res.status(401).json({ error: "Invalid Google token" });
+    res.status(401).json({ error: "Invalid Google token or verification failed" });
   }
 });
 
