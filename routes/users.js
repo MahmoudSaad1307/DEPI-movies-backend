@@ -1,6 +1,10 @@
 const express = require("express");
 const multer = require("multer");
 const { uploadBuffer } = require("../lib/cloudinary");
+const { OAuth2Client } = require("google-auth-library");
+
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 // Accept image files only, max 5 MB
 const upload = multer({
@@ -37,31 +41,44 @@ function withoutPassword(user) {
   return rest;
 }
 
-// POST /google-login
+// POST /google-login — verify Google ID token, then find or create user
 router.post("/google-login", async (req, res) => {
-  const { email, displayName, uid, photoURL } = req.body;
+  const { idToken } = req.body;
+
   if (!JWT_SECRET) {
     return res.status(500).json({ error: "JWT secret is not set" });
   }
-  if (!email || !uid || !displayName) {
-    return res.status(400).json({ error: "name, email, and uid are required" });
+  if (!GOOGLE_CLIENT_ID) {
+    return res.status(500).json({ error: "Google Client ID is not configured" });
   }
-  const normalizedEmail = String(email).trim().toLowerCase();
+  if (!idToken) {
+    return res.status(400).json({ error: "idToken is required" });
+  }
 
   try {
+    // Verify the Google ID token cryptographically
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+
+    const { email, name, picture, sub: googleId } = payload;
+    const normalizedEmail = String(email).trim().toLowerCase();
+
     let user = await findByEmail(normalizedEmail);
 
     if (!user) {
       user = await createUser({
-        name: displayName,
+        name,
         email: normalizedEmail,
-        googleId: uid,
-        photoURL,
+        googleId,
+        photoURL: picture,
       });
     } else if (!user.googleId) {
       // Link existing email/password account with Google
-      const updates = { google_id: uid };
-      if (!user.photoURL && photoURL) updates.photo_url = photoURL;
+      const updates = { google_id: googleId };
+      if (!user.photoURL && picture) updates.photo_url = picture;
       user = await updateUser(user._id, updates);
     }
 
@@ -69,7 +86,7 @@ router.post("/google-login", async (req, res) => {
     res.json({ token, user: withoutPassword(user) });
   } catch (err) {
     console.error("Google authentication error:", err);
-    res.status(400).json({ error: err.message || "Authentication failed" });
+    res.status(401).json({ error: "Invalid Google token" });
   }
 });
 
